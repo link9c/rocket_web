@@ -12,8 +12,6 @@ use crate::common::{JsonReturn, JsonReceive, DbConn};
 // 返回的json结构体
 
 
-
-
 #[get("/db")]
 pub fn db(db_conn: State<'_, DbConn>) -> Json<JsonReturn<String>> {
     let res: Result<String, Debug<Error>> = db_conn.lock()
@@ -30,9 +28,8 @@ pub fn db(db_conn: State<'_, DbConn>) -> Json<JsonReturn<String>> {
     //             &[now.as_str(), "0001"])
     //     .expect("insert single entry into entries table");
 
-    let mut r = JsonReturn::<String>::new(0, "success");
-
-    r.data.push(res.unwrap());
+    let r = JsonReturn::<String>::new()
+        .set_attr(1, vec![res.unwrap()], "success");
     Json(r)
 }
 
@@ -46,9 +43,11 @@ pub fn db(db_conn: State<'_, DbConn>) -> Json<JsonReturn<String>> {
 
 #[post("/add", data = "<js>")]
 pub fn add_one<'a>(js: Json<JsonReceive<'a>>) -> Json<JsonReturn<String>> {
-    let mut r = JsonReturn::<String>::new(0, "success");
-    r.data.push(js.data.to_string());
+
+    let r = JsonReturn::<String>::new()
+        .set_attr(1, vec![js.data.to_string()], "success");
     Json(r)
+
 }
 
 //返回静态资源

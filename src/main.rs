@@ -16,6 +16,7 @@ use account::login::*;
 use std::sync::{Arc, Mutex};
 use rocket::fairing::AdHoc;
 use rusqlite::Connection;
+use std::cell::RefCell;
 
 
 const DBPATH: &'static str = "D:/Program Files (x86)/sqlite3/rocket_admin";
@@ -39,7 +40,7 @@ fn main() {
             Connection::open(DBPATH).expect("not find")
         )
     );
-    let sess = Arc::new(Session { id: Mutex::default() });
+    let sess = Arc::new(Session { users: Mutex::default() });
 
     let count = Counter {
         get: Arc::new(Default::default()),
@@ -54,8 +55,6 @@ fn main() {
         db,
         login,
         logout,
-          user_dashboard,
-        admin_dashboard,
 
         ])
         .attach(count)

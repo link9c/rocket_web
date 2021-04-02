@@ -1,6 +1,7 @@
 use serde::{Serialize, Deserialize};
 use rusqlite::Connection;
 use std::sync::{Mutex, Arc};
+use std::borrow::Borrow;
 
 
 #[derive(Serialize)]
@@ -12,9 +13,15 @@ pub struct JsonReturn<'a, T> {
 }
 
 impl<'a, T> JsonReturn<'a, T> {
-    pub fn new(code: i32, message: &'a str) -> JsonReturn<'a, T> {
+    pub fn new() -> Self {
         let now = time::now().strftime("%Y-%m-%d %H:%M:%S").unwrap().to_string();
-        JsonReturn { code: code, data: Vec::new(), message: message, timestamp: now }
+        JsonReturn { code: 0, data: Vec::new(), message: "success", timestamp: now }
+    }
+    pub fn set_attr(mut self, code: i32, data: Vec<T>, msg: &'a str) -> JsonReturn<'a, T> {
+        self.code = code;
+        self.data = data;
+        self.message = msg;
+        self
     }
 }
 

@@ -1,12 +1,17 @@
 extern crate time;
 
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, MutexGuard};
+
 
 use rocket::{Rocket, Request, State, Data};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::http::Method;
 use rusqlite::Connection;
+use std::collections::HashMap;
+use std::borrow::Borrow;
+use std::ops::Deref;
+use std::collections::hash_map::RandomState;
 
 #[derive(Clone)]
 pub struct Counter {
@@ -55,26 +60,36 @@ impl Fairing for Counter {
 }
 
 
-
-
 pub struct Session {
-    pub id: Mutex<Vec<String>>,
+    pub(crate) users: Mutex<HashMap<String, usize>>,
 }
 
 impl Session {
-    pub fn contains_user(&self, other: String) -> bool {
-        self.id.lock().unwrap().contains(&other)
+    pub fn contains_user(&self, other: &str) -> bool {
+        match self.users.lock().unwrap().get(other) {
+            None => false,
+            Some(_) => true
+        }
     }
 
-    pub fn remove_user(&mut self, id: String) {
-        let mut guard = self.id.lock().unwrap();
-        guard.remove(0);
+    pub fn get_user(&self, other: &str) -> bool {
+        match self.users.lock().unwrap().get(other) {
+            None => false,
+            Some(_) => true
+        }
+    }
+
+    pub fn remove_user(&self, id: String) {
+        let mut guard = self.users.lock().unwrap();
+        guard.remove(id.as_str());
     }
 
     pub fn push_user(&self, id: String) {
-        let mut guard = self.id.lock().unwrap();
-        guard.push(id)
+        let mut guard = self.users.lock().unwrap();
+        guard.insert(id, 1);
     }
+
+
 }
 
 ///
