@@ -10,13 +10,15 @@ mod account;
 mod common;
 
 
-use views::*;
-use middleware::*;
-use account::login::*;
 use std::sync::{Arc, Mutex};
 use rocket::fairing::AdHoc;
 use rusqlite::Connection;
 use std::cell::RefCell;
+
+use crate::middleware::{CusSession, Session, Counter};
+use crate::views::*;
+use crate::account::login::*;
+use crate::account::register::*;
 
 
 const DBPATH: &'static str = "D:/Program Files (x86)/sqlite3/rocket_admin";
@@ -55,6 +57,7 @@ fn main() {
         db,
         login,
         logout,
+            do_register
 
         ])
         .attach(count)

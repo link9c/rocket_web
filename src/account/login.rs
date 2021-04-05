@@ -4,6 +4,7 @@ use rocket::http::{Cookies, Cookie};
 use rocket::{Request, State};
 use serde::{Deserialize};
 use rocket_contrib::json::{Json, JsonError};
+// use rocket_contrib::json;
 use crate::middleware::CusSession;
 use crate::common::{JsonReturn, DbConn};
 use rusqlite::Error;
@@ -45,7 +46,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for &'a User {
         println!("in user FromRequest");
         let p = request.uri().path();
 
-        let mut sess = request.guard::<State<CusSession>>().succeeded().expect("error");
+        let sess = request.guard::<State<CusSession>>().succeeded().expect("error");
         let user_result = request.local_cache(|| {
             let db = request.guard::<Database>().succeeded().expect("error");
             if p.contains("/dash") {
@@ -96,12 +97,12 @@ pub fn login(
     ip: LoginIP,
 ) -> Json<JsonReturn<'static, String>> {
     // let mut r = JsonReturn::<String>::new(0, "success");
-    let mut r = JsonReturn::<String>::new();
+    let r = JsonReturn::<String>::new();
     match login {
         Ok(t) => {
             let username = t.username.clone();
             let status: Result<i32, Error> = db.lock().expect("connection lock")
-                .query_row("select status from  users where name =$1 and password =$2"
+                .query_row("select status from  users where name =$1 and password =$2 or email =$1 and password= $2"
                            , &[username.as_str(), t.password.as_str()]
                            , |row| { row.get(0) });
 
@@ -118,7 +119,7 @@ pub fn login(
                     cookies.add_private(Cookie::new("user_id", username));
 
 
-                    return Json(r.set_attr(1, vec![], "login successfully"));
+                    return Json(r.set_attr(0, vec![], "login successfully"));
                 }
                 Err(e) => {
                     println!("{}", e.to_string());
@@ -136,7 +137,7 @@ pub fn login(
 pub fn logout(mut cookies: Cookies, mut session: State<CusSession>) -> Json<JsonReturn<'static, String>> {
     let cookie = cookies.get_private("user_id");
     // sess.lock().unwrap().remove_user(c);
-    let mut r = JsonReturn::<String>::new();
+    let r = JsonReturn::<String>::new();
 
     println!("{:?}", session.clone().users);
     match cookie {
